@@ -1,4 +1,5 @@
 import json
+import os
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
@@ -8,8 +9,11 @@ from ml_predictor import predictor
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key-here-change-in-production'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///health_assessment.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///instance/health_assessment.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Ensure instance folder is available for the database
+os.makedirs(os.path.join(app.root_path, 'instance'), exist_ok=True)
 
 db = SQLAlchemy(app)
 login_manager = LoginManager()
@@ -19,7 +23,7 @@ login_manager.login_view = 'login'
 @app.context_processor
 def inject_personal_info():
     if current_user.is_authenticated:
-        personal_info = PersonalInfo.query.filter_by(user_id=current_user.id).first()
+        personal_info = current_user.personal_info
         return {'personal_info': personal_info}
     return {}
 
@@ -237,6 +241,9 @@ def login():
         user = User.query.filter_by(username=username).first()
         if user and check_password_hash(user.password_hash, password):
             login_user(user)
+            next_page = request.args.get('next')
+            if next_page and next_page.startswith('/'):
+                return redirect(next_page)
             return redirect(url_for('dashboard'))
         else:
             flash('Invalid username or password')
@@ -277,7 +284,7 @@ def register():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    personal_info = PersonalInfo.query.filter_by(user_id=current_user.id).first()
+    personal_info = current_user.personal_info
     recent_assessments = Assessment.query.filter_by(user_id=current_user.id).order_by(Assessment.created_at.desc()).limit(5).all()
 
     return render_template('dashboard.html', personal_info=personal_info, assessments=recent_assessments)
@@ -285,7 +292,7 @@ def dashboard():
 @app.route('/personal-info', methods=['GET', 'POST'])
 @login_required
 def personal_info():
-    personal_info = PersonalInfo.query.filter_by(user_id=current_user.id).first()
+    personal_info = current_user.personal_info
 
     if request.method == 'POST':
         if not personal_info:
@@ -312,7 +319,7 @@ def personal_info():
 @app.route('/assessment', methods=['GET', 'POST'])
 @login_required
 def assessment():
-    personal_info = PersonalInfo.query.filter_by(user_id=current_user.id).first()
+    personal_info = current_user.personal_info
     if not personal_info:
         flash('Please complete your personal information first.')
         return redirect(url_for('personal_info'))
