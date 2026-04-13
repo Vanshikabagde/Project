@@ -202,8 +202,17 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(userData => {
             console.log('User data received:', userData);
-            createUserRiskChart(userData.risk_trend);
-            createUserBmiChart(userData.bmi_trend);
+            if (!userData.risk_trend || userData.risk_trend.length === 0) {
+                document.getElementById('userRiskChart').parentElement.innerHTML = '<p style="color: #666; text-align: center;">No risk trend data available yet. Take an assessment to generate your personal trend charts.</p>';
+            } else {
+                createUserRiskChart(userData.risk_trend);
+            }
+
+            if (!userData.bmi_trend || userData.bmi_trend.length === 0) {
+                document.getElementById('userBmiChart').parentElement.innerHTML = '<p style="color: #666; text-align: center;">No BMI trend data available yet. Take an assessment to generate your personal trend charts.</p>';
+            } else {
+                createUserBmiChart(userData.bmi_trend);
+            }
         })
         .catch(error => {
             console.log('Error loading user stats:', error);
@@ -300,11 +309,15 @@ function createUserRiskChart(riskTrend) {
         console.error('Chart.js not loaded');
         return;
     }
+    if (!riskTrend || riskTrend.length === 0) {
+        document.getElementById('userRiskChart').parentElement.innerHTML = '<p style="color: #666; text-align: center;">No risk trend data available yet. Take an assessment to generate your personal trend chart.</p>';
+        return;
+    }
     const ctx = document.getElementById('userRiskChart').getContext('2d');
 
     // Convert risk levels to numbers for charting
     const riskToNum = {'Low': 1, 'Medium': 2, 'High': 3};
-    const data = (riskTrend || []).map(item => riskToNum[item.risk] || 0);
+    const data = riskTrend.map(item => riskToNum[item.risk] || 0);
 
     new Chart(ctx, {
         type: 'line',
@@ -349,6 +362,10 @@ function createUserRiskChart(riskTrend) {
 function createUserBmiChart(bmiTrend) {
     if (typeof Chart === 'undefined') {
         console.error('Chart.js not loaded');
+        return;
+    }
+    if (!bmiTrend || bmiTrend.length === 0) {
+        document.getElementById('userBmiChart').parentElement.innerHTML = '<p style="color: #666; text-align: center;">No BMI trend data available yet. Take an assessment to generate your personal trend chart.</p>';
         return;
     }
     const ctx = document.getElementById('userBmiChart').getContext('2d');
