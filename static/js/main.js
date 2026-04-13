@@ -2,8 +2,10 @@
 
 // Enhanced BMI calculation with real-time updates
 function calculateBMI() {
-    const height = parseFloat(document.getElementById('height')?.value || 0);
-    const weight = parseFloat(document.getElementById('weight')?.value || 0);
+    const heightInput = document.getElementById('height');
+    const weightInput = document.getElementById('weight');
+    const height = heightInput ? parseFloat(heightInput.value || 0) : 0;
+    const weight = weightInput ? parseFloat(weightInput.value || 0) : 0;
     const bmiDisplay = document.getElementById('bmiDisplay');
     const bmiValue = document.getElementById('bmiValue');
     const bmiCategory = document.getElementById('bmiCategory');
@@ -90,7 +92,8 @@ function validateForm(formId) {
 
             const errorMsg = document.createElement('div');
             errorMsg.className = 'error-message';
-            errorMsg.textContent = `${field.previousElementSibling?.textContent || 'This field'} is required`;
+            const labelText = field.previousElementSibling && field.previousElementSibling.textContent ? field.previousElementSibling.textContent : 'This field';
+            errorMsg.textContent = `${labelText} is required`;
             fieldGroup.appendChild(errorMsg);
 
             // Shake animation
