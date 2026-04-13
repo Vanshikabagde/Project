@@ -1,0 +1,635 @@
+{% extends "base.html" %}
+
+{% block title %}Health Statistics - {{ super() }}{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Health Statistics & Analytics</h1>
+
+    <div class="stats-grid">
+        <!-- Population Statistics -->
+        <div class="stats-card">
+            <h2>📊 Population Health Data</h2>
+            {% if stats %}
+                <div class="stat-item">
+                    <strong>Total Samples:</strong> {{ stats.total_samples }}
+                </div>
+                <div class="stat-item">
+                    <strong>Average Age:</strong> {{ "%.1f"|format(stats.age_distribution.mean) }} years
+                </div>
+                <div class="stat-item">
+                    <strong>Average BMI:</strong> {{ "%.1f"|format(stats.bmi_distribution.mean) }}
+                </div>
+
+                <h3>BMI Distribution:</h3>
+                <div class="bmi-stats">
+                    <div class="bmi-stat">Underweight: {{ stats.bmi_distribution.underweight }}</div>
+                    <div class="bmi-stat">Normal: {{ stats.bmi_distribution.normal }}</div>
+                    <div class="bmi-stat">Overweight: {{ stats.bmi_distribution.overweight }}</div>
+                    <div class="bmi-stat">Obese: {{ stats.bmi_distribution.obese }}</div>
+                </div>
+
+                <h3>Risk Level Distribution:</h3>
+                <div class="risk-stats">
+                    <div class="risk-stat low">Low Risk: {{ stats.risk_distribution.Low }}</div>
+                    <div class="risk-stat medium">Medium Risk: {{ stats.risk_distribution.Medium }}</div>
+                    <div class="risk-stat high">High Risk: {{ stats.risk_distribution.High }}</div>
+                </div>
+            {% else %}
+                <p>No population data available. The ML model may not be trained yet.</p>
+            {% endif %}
+        </div>
+
+        <!-- User Statistics -->
+        <div class="stats-card">
+            <h2>👤 Your Health Journey</h2>
+            <div class="stat-item">
+                <strong>Total Assessments:</strong> {{ user_stats.total_assessments if user_stats else 0 }}
+            </div>
+            {% if user_stats and user_stats.avg_bmi %}
+                <div class="stat-item">
+                    <strong>Average BMI:</strong> {{ user_stats.avg_bmi }}
+                </div>
+            {% endif %}
+
+            <h3>Your Risk Distribution:</h3>
+            <div class="risk-stats">
+                <div class="risk-stat low">Low: {{ user_stats.risk_distribution.Low if user_stats and user_stats.risk_distribution else 0 }}</div>
+                <div class="risk-stat medium">Medium: {{ user_stats.risk_distribution.Medium if user_stats and user_stats.risk_distribution else 0 }}</div>
+                <div class="risk-stat high">High: {{ user_stats.risk_distribution.High if user_stats and user_stats.risk_distribution else 0 }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="charts-section">
+        <h2>📈 Data Visualizations</h2>
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3>Risk Level Distribution</h3>
+                <canvas id="riskChart" width="300" height="200"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>BMI Categories</h3>
+                <canvas id="bmiChart" width="300" height="200"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>Your Risk Trend</h3>
+                <canvas id="userRiskChart" width="300" height="200"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>Your BMI Trend</h3>
+                <canvas id="userBmiChart" width="300" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feature Importance -->
+    <div class="feature-importance">
+        <h2>🎯 Risk Factor Importance</h2>
+        <p>Understanding which health factors have the most impact on risk assessment:</p>
+        <div id="featureImportance">
+            <div class="loading">Loading feature importance data...</div>
+        </div>
+    </div>
+
+    <!-- Health Recommendations -->
+    <div class="recommendations-section">
+        <h2>💡 Health Recommendations</h2>
+        <div class="recommendations-grid">
+            <div class="recommendation-card">
+                <h3>🏃‍♂️ Exercise & Lifestyle</h3>
+                <ul>
+                    <li>Aim for at least 150 minutes of moderate aerobic activity per week</li>
+                    <li>Include strength training exercises 2-3 times per week</li>
+                    <li>Maintain a balanced diet with plenty of fruits and vegetables</li>
+                    <li>Stay hydrated and aim for 7-9 hours of sleep per night</li>
+                </ul>
+            </div>
+            <div class="recommendation-card">
+                <h3>⚕️ Medical Check-ups</h3>
+                <ul>
+                    <li>Schedule regular health screenings based on your age and risk factors</li>
+                    <li>Monitor your blood pressure and cholesterol levels</li>
+                    <li>Get vaccinated according to recommended schedules</li>
+                    <li>Consult healthcare providers about family medical history</li>
+                </ul>
+            </div>
+            <div class="recommendation-card">
+                <h3>📊 Risk Management</h3>
+                <ul>
+                    <li>Track your BMI and maintain it within healthy ranges</li>
+                    <li>If you smoke, consider smoking cessation programs</li>
+                    <li>Manage stress through meditation or relaxation techniques</li>
+                    <li>Build strong social connections and support networks</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export & Actions -->
+    <div class="export-section">
+        <h2>📤 Export Your Data</h2>
+        <p>Download your health assessment data for personal records or sharing with healthcare providers:</p>
+        <div class="export-buttons">
+            <button class="btn btn-primary" onclick="exportData('csv')">
+                <i class="fas fa-download"></i> Export as CSV
+            </button>
+            <button class="btn btn-secondary" onclick="exportData('pdf')">
+                <i class="fas fa-file-pdf"></i> Export as PDF
+            </button>
+            <button class="btn btn-secondary" onclick="exportData('json')">
+                <i class="fas fa-code"></i> Export as JSON
+            </button>
+        </div>
+    </div>
+
+    <!-- Comparative Analysis -->
+    <div class="comparison-section">
+        <h2>📈 Population Comparison</h2>
+        <p>How do your health metrics compare to the general population?</p>
+        <div class="comparison-grid">
+            <div class="comparison-card">
+                <h3>BMI Comparison</h3>
+                <div id="bmiComparison">
+                    <p>Loading comparison data...</p>
+                </div>
+            </div>
+            <div class="comparison-card">
+                <h3>Risk Level Comparison</h3>
+                <div id="riskComparison">
+                    <p>Loading comparison data...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script type="application/json" id="stats-data">
+{{ stats|tojson }}
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Get statistics data from embedded JSON
+    const statsData = document.getElementById('stats-data');
+    const stats = statsData ? JSON.parse(statsData.textContent) : null;
+    console.log('Statistics data from embedded JSON:', stats);
+
+    if (stats && stats.total_samples) {
+        createRiskChart(stats.risk_distribution);
+        createBmiChart(stats.bmi_distribution);
+    } else {
+        console.log('No statistics data available from embedded JSON');
+        document.getElementById('riskChart').parentElement.innerHTML = '<p style="color: red; text-align: center;">No population data available</p>';
+        document.getElementById('bmiChart').parentElement.innerHTML = '<p style="color: red; text-align: center;">No population data available</p>';
+    }
+
+    // Load user statistics via API
+    fetch('/api/user-stats')
+        .then(response => {
+            console.log('User stats API response status:', response.status);
+            if (response.ok) {
+                return response.json();
+            } else {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+        })
+        .then(userData => {
+            console.log('User data received:', userData);
+            createUserRiskChart(userData.risk_trend);
+            createUserBmiChart(userData.bmi_trend);
+        })
+        .catch(error => {
+            console.log('Error loading user stats:', error);
+            document.getElementById('userRiskChart').parentElement.innerHTML = '<p style="color: red; text-align: center;">Unable to load user risk trend data</p>';
+            document.getElementById('userBmiChart').parentElement.innerHTML = '<p style="color: red; text-align: center;">Unable to load user BMI trend data</p>';
+        });
+
+    // Load feature importance
+    fetch('/api/feature-importance')
+        .then(response => {
+            console.log('Feature importance API response status:', response.status);
+            if (response.ok) {
+                return response.json();
+            } else {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+        })
+        .then(data => {
+            console.log('Feature importance data received:', data);
+            if (Array.isArray(data)) {
+                createFeatureImportanceChart(data);
+                displayFeatureImportance(data);
+            } else {
+                console.log('Error loading feature importance:', data.error);
+                document.getElementById('featureImportance').innerHTML = '<p>Unable to load feature importance data.</p>';
+            }
+        })
+        .catch(error => {
+            console.log('Error loading feature importance:', error);
+            document.getElementById('featureImportance').innerHTML = '<p>Unable to load feature importance data.</p>';
+        });
+
+    // Load comparison data
+    loadComparisonData();
+});
+
+function createRiskChart(riskData) {
+    if (typeof Chart === 'undefined') {
+        console.error('Chart.js not loaded');
+        return;
+    }
+    const ctx = document.getElementById('riskChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Low Risk', 'Medium Risk', 'High Risk'],
+            datasets: [{
+                data: [riskData.Low || 0, riskData.Medium || 0, riskData.High || 0],
+                backgroundColor: ['#28a745', '#ffc107', '#dc3545'],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
+function createBmiChart(bmiData) {
+    if (typeof Chart === 'undefined') {
+        console.error('Chart.js not loaded');
+        return;
+    }
+    const ctx = document.getElementById('bmiChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Underweight', 'Normal', 'Overweight', 'Obese'],
+            datasets: [{
+                label: 'Number of People',
+                data: [bmiData.underweight || 0, bmiData.normal || 0, bmiData.overweight || 0, bmiData.obese || 0],
+                backgroundColor: ['#17a2b8', '#28a745', '#ffc107', '#dc3545'],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+function createUserRiskChart(riskTrend) {
+    if (typeof Chart === 'undefined') {
+        console.error('Chart.js not loaded');
+        return;
+    }
+    const ctx = document.getElementById('userRiskChart').getContext('2d');
+
+    // Convert risk levels to numbers for charting
+    const riskToNum = {'Low': 1, 'Medium': 2, 'High': 3};
+    const data = (riskTrend || []).map(item => riskToNum[item.risk] || 0);
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: (riskTrend || []).map(item => item.date),
+            datasets: [{
+                label: 'Risk Level',
+                data: data,
+                borderColor: '#667eea',
+                backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            const numToRisk = {1: 'Low', 2: 'Medium', 3: 'High'};
+                            return numToRisk[value] || value;
+                        }
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const numToRisk = {1: 'Low', 2: 'Medium', 3: 'High'};
+                            return `Risk: ${numToRisk[context.parsed.y]}`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function createUserBmiChart(bmiTrend) {
+    if (typeof Chart === 'undefined') {
+        console.error('Chart.js not loaded');
+        return;
+    }
+    const ctx = document.getElementById('userBmiChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: (bmiTrend || []).map(item => item.date),
+            datasets: [{
+                label: 'BMI',
+                data: (bmiTrend || []).map(item => item.bmi),
+                borderColor: '#28a745',
+                backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: false
+                }
+            }
+        }
+    });
+}
+
+function createFeatureImportanceChart(features) {
+    if (typeof Chart === 'undefined') {
+        console.error('Chart.js not loaded');
+        return;
+    }
+    const ctx = document.getElementById('featureImportanceChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: (features || []).slice(0, 8).map(item => formatFeatureName(item[0])),
+            datasets: [{
+                label: 'Importance',
+                data: (features || []).slice(0, 8).map(item => item[1]),
+                backgroundColor: [
+                    '#667eea', '#764ba2', '#f093fb', '#4ade80',
+                    '#fbbf24', '#f87171', '#60a5fa', '#34d399'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            scales: {
+                x: {
+                    beginAtZero: true
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+}
+
+function displayFeatureImportance(features) {
+    const container = document.getElementById('featureImportance');
+    const topFeatures = features.slice(0, 6);
+
+    const html = `
+        <div class="feature-list">
+            ${topFeatures.map(([feature, importance]) => `
+                <div class="feature-item">
+                    <span class="feature-name">${formatFeatureName(feature)}</span>
+                    <span class="feature-weight">${getImportanceLevel(importance)}</span>
+                </div>
+            `).join('')}
+        </div>
+        <div class="chart-card" style="margin-top: 30px;">
+            <h3>Feature Importance Chart</h3>
+            <canvas id="featureImportanceChart" width="400" height="250"></canvas>
+        </div>
+    `;
+
+    container.innerHTML = html;
+}
+
+function formatFeatureName(feature) {
+    const nameMap = {
+        'age': 'Age',
+        'bmi': 'BMI',
+        'smoking_status': 'Smoking Status',
+        'exercise_frequency': 'Exercise Frequency',
+        'family_history': 'Family History',
+        'medical_conditions': 'Medical Conditions',
+        'medications': 'Medications'
+    };
+    return nameMap[feature] || feature.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+}
+
+function getImportanceLevel(importance) {
+    if (importance > 0.25) return 'High Impact';
+    if (importance > 0.15) return 'Medium Impact';
+    return 'Low Impact';
+}
+
+// Export functionality
+function exportData(format) {
+    fetch('/api/user-stats')
+        .then(response => response.json())
+        .then(data => {
+            switch(format) {
+                case 'csv':
+                    exportAsCSV(data);
+                    break;
+                case 'pdf':
+                    exportAsPDF(data);
+                    break;
+                case 'json':
+                    exportAsJSON(data);
+                    break;
+            }
+        })
+        .catch(error => {
+            console.log('Error exporting data:', error);
+            alert('Error exporting data. Please try again.');
+        });
+}
+
+function exportAsCSV(data) {
+    let csv = 'Date,Risk Level,BMI\n';
+    data.risk_trend.forEach(item => {
+        const bmi = data.bmi_trend.find(b => b.date === item.date)?.bmi || '';
+        csv += `${item.date},${item.risk},${bmi}\n`;
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'health_assessment_data.csv';
+    a.click();
+    window.URL.revokeObjectURL(url);
+}
+
+function exportAsJSON(data) {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'health_assessment_data.json';
+    a.click();
+    window.URL.revokeObjectURL(url);
+}
+
+function exportAsPDF(data) {
+    // For PDF export, we'll create a simple HTML-based PDF
+    const printWindow = window.open('', '_blank');
+    let html = `
+        <html>
+        <head>
+            <title>Health Assessment Report</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                h1 { color: #667eea; }
+                table { border-collapse: collapse; width: 100%; }
+                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                th { background-color: #f2f2f2; }
+            </style>
+        </head>
+        <body>
+            <h1>Health Assessment Report</h1>
+            <p>Total Assessments: ${data.total_assessments}</p>
+            <table>
+                <tr><th>Date</th><th>Risk Level</th><th>BMI</th></tr>
+    `;
+
+    data.risk_trend.forEach(item => {
+        const bmi = data.bmi_trend.find(b => b.date === item.date)?.bmi || '';
+        html += `<tr><td>${item.date}</td><td>${item.risk}</td><td>${bmi}</td></tr>`;
+    });
+
+    html += `
+            </table>
+        </body>
+        </html>
+    `;
+
+    printWindow.document.write(html);
+    printWindow.document.close();
+    printWindow.print();
+}
+
+// Load comparison data
+function loadComparisonData() {
+    // Use the stats data from embedded JSON
+    const statsData = document.getElementById('stats-data');
+    const stats = statsData ? JSON.parse(statsData.textContent) : null;
+    console.log('Loading comparison with stats:', stats);
+
+    // Load user stats for comparison
+    fetch('/api/user-stats')
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+        })
+        .then(userData => {
+            console.log('Comparison user data:', userData);
+            if (stats && stats.total_samples && userData.total_assessments > 0) {
+                displayBMIComparison(stats, userData);
+                displayRiskComparison(stats, userData);
+            } else {
+                console.log('Insufficient data for comparison');
+                document.getElementById('bmiComparison').innerHTML = '<p>Insufficient data for BMI comparison</p>';
+                document.getElementById('riskComparison').innerHTML = '<p>Insufficient data for risk comparison</p>';
+            }
+        })
+        .catch(error => {
+            console.log('Error loading comparison data:', error);
+            document.getElementById('bmiComparison').innerHTML = '<p>Unable to load comparison data</p>';
+            document.getElementById('riskComparison').innerHTML = '<p>Unable to load comparison data</p>';
+        });
+}
+
+function displayBMIComparison(stats, userData) {
+    const userAvgBMI = userData.bmi_trend.length > 0
+        ? userData.bmi_trend.reduce((sum, item) => sum + item.bmi, 0) / userData.bmi_trend.length
+        : 0;
+
+    const populationAvgBMI = stats.bmi_distribution.mean;
+    const percentile = userAvgBMI < populationAvgBMI ? 'below' : 'above';
+
+    const html = `
+        <div class="comparison-metric">
+            <div class="metric-value">Your Avg BMI: ${userAvgBMI.toFixed(1)}</div>
+            <div class="metric-value">Population Avg BMI: ${populationAvgBMI.toFixed(1)}</div>
+            <div class="metric-status ${percentile === 'below' ? 'good' : 'warning'}">
+                Your BMI is ${Math.abs(userAvgBMI - populationAvgBMI).toFixed(1)} points ${percentile} the population average
+            </div>
+        </div>
+    `;
+
+    document.getElementById('bmiComparison').innerHTML = html;
+}
+
+function displayRiskComparison(stats, userData) {
+    const userRiskCounts = userData.risk_trend.reduce((acc, item) => {
+        acc[item.risk] = (acc[item.risk] || 0) + 1;
+        return acc;
+    }, {});
+
+    const userTotal = userData.risk_trend.length;
+    const populationTotal = stats.total_samples;
+
+    const html = `
+        <div class="risk-comparison">
+            <div class="risk-row">
+                <span>Low Risk:</span>
+                <span>You: ${((userRiskCounts.Low || 0) / userTotal * 100).toFixed(1)}%</span>
+                <span>Population: ${((stats.risk_distribution.Low || 0) / populationTotal * 100).toFixed(1)}%</span>
+            </div>
+            <div class="risk-row">
+                <span>Medium Risk:</span>
+                <span>You: ${((userRiskCounts.Medium || 0) / userTotal * 100).toFixed(1)}%</span>
+                <span>Population: ${((stats.risk_distribution.Medium || 0) / populationTotal * 100).toFixed(1)}%</span>
+            </div>
+            <div class="risk-row">
+                <span>High Risk:</span>
+                <span>You: ${((userRiskCounts.High || 0) / userTotal * 100).toFixed(1)}%</span>
+                <span>Population: ${((stats.risk_distribution.High || 0) / populationTotal * 100).toFixed(1)}%</span>
+            </div>
+        </div>
+    `;
+
+    document.getElementById('riskComparison').innerHTML = html;
+}
+
+// Initialize comparison data loading
+loadComparisonData();
+
+</script>
+{% endblock %}

@@ -1,0 +1,710 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - HealthGuard{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Welcome Section -->
+    <div class="welcome-section">
+        <div class="welcome-content">
+            <h1>👋 Welcome back, {{ current_user.username }}!</h1>
+            <p>Your personal health dashboard</p>
+            <div class="welcome-stats">
+                <div class="stat-item">
+                    <span class="stat-number">{{ assessments|length }}</span>
+                    <span class="stat-label">Assessments</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">
+                        {% if assessments %}
+                            {% set risk_counts = {'Low': 0, 'Medium': 0, 'High': 0} %}
+                            {% for assessment in assessments %}
+                                {% if assessment.risk_level in risk_counts %}
+                                    {% set _ = risk_counts.update({assessment.risk_level: risk_counts[assessment.risk_level] + 1}) %}
+                                {% endif %}
+                            {% endfor %}
+                            {% set max_risk = risk_counts.items() | sort(attribute='1', reverse=True) | first %}
+                            {{ max_risk[0] }}
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </span>
+                    <span class="stat-label">Risk Level</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">
+                        {% if assessments %}
+                            {{ (assessments|last).created_at.strftime('%b %d') }}
+                        {% else %}
+                            Never
+                        {% endif %}
+                    </span>
+                    <span class="stat-label">Last Check</span>
+                </div>
+            </div>
+        </div>
+        <div class="welcome-illustration">
+            <div class="illustration">
+                <i class="fas fa-heartbeat"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+        <h2>🚀 Quick Actions</h2>
+        <div class="action-grid">
+            {% if not personal_info %}
+                <a href="{{ url_for('personal_info') }}" class="action-card primary">
+                    <div class="action-icon">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                    <div class="action-content">
+                        <h3>Complete Profile</h3>
+                        <p>Add your personal information</p>
+                    </div>
+                    <div class="action-arrow">
+                        <i class="fas fa-arrow-right"></i>
+                    </div>
+                </a>
+            {% else %}
+                <a href="{{ url_for('assessment') }}" class="action-card primary">
+                    <div class="action-icon">
+                        <i class="fas fa-clipboard-check"></i>
+                    </div>
+                    <div class="action-content">
+                        <h3>New Assessment</h3>
+                        <p>Take a health risk assessment</p>
+                    </div>
+                    <div class="action-arrow">
+                        <i class="fas fa-arrow-right"></i>
+                    </div>
+                </a>
+            {% endif %}
+
+            <a href="{{ url_for('history') }}" class="action-card secondary">
+                <div class="action-icon">
+                    <i class="fas fa-history"></i>
+                </div>
+                <div class="action-content">
+                    <h3>View History</h3>
+                    <p>See all your assessments</p>
+                </div>
+                <div class="action-arrow">
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+            </a>
+
+            <a href="{{ url_for('statistics') }}" class="action-card secondary">
+                <div class="action-icon">
+                    <i class="fas fa-chart-bar"></i>
+                </div>
+                <div class="action-content">
+                    <h3>Analytics</h3>
+                    <p>View health statistics</p>
+                </div>
+                <div class="action-arrow">
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Dashboard Grid -->
+    <div class="dashboard-grid">
+        <!-- Personal Info Status -->
+        <div class="dashboard-card">
+            <div class="card-header">
+                <h3>📋 Personal Information</h3>
+                <div class="card-status">
+                    {% if personal_info %}
+                        <span class="status-badge complete">
+                            <i class="fas fa-check"></i> Complete
+                        </span>
+                    {% else %}
+                        <span class="status-badge incomplete">
+                            <i class="fas fa-exclamation-triangle"></i> Incomplete
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if personal_info %}
+                <div class="personal-info">
+                    <div class="info-item">
+                        <i class="fas fa-user"></i>
+                        <span>{{ personal_info.first_name }} {{ personal_info.last_name }}</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-envelope"></i>
+                        <span>{{ current_user.email }}</span>
+                    </div>
+                    {% if personal_info.phone %}
+                        <div class="info-item">
+                            <i class="fas fa-phone"></i>
+                            <span>{{ personal_info.phone }}</span>
+                        </div>
+                    {% endif %}
+                </div>
+                <a href="{{ url_for('personal_info') }}" class="btn btn-secondary">Update Info</a>
+            {% else %}
+                <p class="card-description">Complete your personal information to unlock all features and get personalized health insights.</p>
+                <a href="{{ url_for('personal_info') }}" class="btn btn-primary">Complete Now</a>
+            {% endif %}
+        </div>
+
+        <!-- Recent Assessments -->
+        <div class="dashboard-card">
+            <div class="card-header">
+                <h3>📊 Recent Assessments</h3>
+                <a href="{{ url_for('history') }}" class="card-link">View All</a>
+            </div>
+
+            {% if assessments %}
+                <div class="assessment-list">
+                    {% for assessment in assessments[:3] %}
+                        <div class="assessment-item">
+                            <div class="assessment-info">
+                                <div class="assessment-date">
+                                    <i class="fas fa-calendar"></i>
+                                    {{ assessment.created_at.strftime('%b %d, %Y') }}
+                                </div>
+                                <div class="assessment-risk risk-{{ assessment.risk_level.lower() }}">
+                                    <i class="fas fa-circle"></i>
+                                    {{ assessment.risk_level }} Risk
+                                </div>
+                            </div>
+                            <a href="{{ url_for('assessment_result', assessment_id=assessment.id) }}" class="assessment-link">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-clipboard-list"></i>
+                    </div>
+                    <h4>No assessments yet</h4>
+                    <p>Take your first health assessment to get started</p>
+                    {% if personal_info %}
+                        <a href="{{ url_for('assessment') }}" class="btn btn-primary">Start Assessment</a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Health Insights -->
+        <div class="dashboard-card">
+            <div class="card-header">
+                <h3>💡 Health Insights</h3>
+            </div>
+
+            <div class="insights-list">
+                <div class="insight-item">
+                    <div class="insight-icon">
+                        <i class="fas fa-running"></i>
+                    </div>
+                    <div class="insight-content">
+                        <h4>Stay Active</h4>
+                        <p>Regular exercise reduces disease risk by up to 30%</p>
+                    </div>
+                </div>
+
+                <div class="insight-item">
+                    <div class="insight-icon">
+                        <i class="fas fa-utensils"></i>
+                    </div>
+                    <div class="insight-content">
+                        <h4>Healthy Eating</h4>
+                        <p>Balanced diet helps maintain healthy BMI levels</p>
+                    </div>
+                </div>
+
+                <div class="insight-item">
+                    <div class="insight-icon">
+                        <i class="fas fa-stethoscope"></i>
+                    </div>
+                    <div class="insight-content">
+                        <h4>Regular Check-ups</h4>
+                        <p>Early detection is key to better health outcomes</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Risk Overview -->
+        {% if assessments %}
+        <div class="dashboard-card">
+            <div class="card-header">
+                <h3>🎯 Risk Overview</h3>
+            </div>
+
+            <div class="risk-overview">
+                {% set risk_counts = {'Low': 0, 'Medium': 0, 'High': 0} %}
+                {% for assessment in assessments %}
+                    {% if assessment.risk_level in risk_counts %}
+                        {% set _ = risk_counts.update({assessment.risk_level: risk_counts[assessment.risk_level] + 1}) %}
+                    {% endif %}
+                {% endfor %}
+
+                <div class="risk-stats">
+                    <div class="risk-stat">
+                        <div class="risk-number low">{{ risk_counts['Low'] }}</div>
+                        <div class="risk-label">Low Risk</div>
+                    </div>
+                    <div class="risk-stat">
+                        <div class="risk-number medium">{{ risk_counts['Medium'] }}</div>
+                        <div class="risk-label">Medium Risk</div>
+                    </div>
+                    <div class="risk-stat">
+                        <div class="risk-number high">{{ risk_counts['High'] }}</div>
+                        <div class="risk-label">High Risk</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.dashboard-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+    animation: fadeIn 0.6s ease-out;
+}
+
+.welcome-section {
+    background: linear-gradient(135deg, rgba(102,126,234,0.1), rgba(118,75,162,0.1));
+    border-radius: var(--border-radius-xl);
+    padding: 40px;
+    margin-bottom: 40px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 40px;
+    align-items: center;
+    animation: fadeInUp 0.8s ease-out;
+}
+
+.welcome-content h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 10px;
+}
+
+.welcome-content p {
+    font-size: 1.2rem;
+    color: var(--gray-600);
+    margin-bottom: 30px;
+}
+
+.welcome-stats {
+    display: flex;
+    gap: 30px;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    display: block;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: var(--gray-600);
+    font-weight: 500;
+}
+
+.welcome-illustration {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.illustration {
+    width: 120px;
+    height: 120px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: float 3s ease-in-out infinite;
+}
+
+.illustration i {
+    font-size: 3rem;
+    color: white;
+}
+
+.quick-actions {
+    margin-bottom: 40px;
+}
+
+.quick-actions h2 {
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: var(--gray-900);
+    margin-bottom: 20px;
+}
+
+.action-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.action-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: var(--border-radius-lg);
+    padding: 25px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    text-decoration: none;
+    transition: var(--transition);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.action-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-xl);
+}
+
+.action-card.primary {
+    background: linear-gradient(135deg, rgba(102,126,234,0.1), rgba(118,75,162,0.1));
+    border-color: rgba(102, 126, 234, 0.3);
+}
+
+.action-card.secondary {
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.action-icon {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+}
+
+.action-content h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--gray-900);
+    margin-bottom: 5px;
+}
+
+.action-content p {
+    color: var(--gray-600);
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.action-arrow {
+    margin-left: auto;
+    color: var(--primary-color);
+    transition: var(--transition);
+}
+
+.action-card:hover .action-arrow {
+    transform: translateX(5px);
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 30px;
+}
+
+.dashboard-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: var(--border-radius-xl);
+    padding: 30px;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    animation: fadeInUp 0.8s ease-out;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.card-header h3 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--gray-900);
+    margin: 0;
+}
+
+.card-status .status-badge {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.status-badge.complete {
+    background: rgba(34, 197, 94, 0.1);
+    color: var(--success-color);
+}
+
+.status-badge.incomplete {
+    background: rgba(251, 191, 36, 0.1);
+    color: var(--warning-color);
+}
+
+.card-link {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: var(--transition);
+}
+
+.card-link:hover {
+    color: var(--secondary-color);
+}
+
+.personal-info {
+    margin-bottom: 20px;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--gray-100);
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.info-item i {
+    color: var(--primary-color);
+    width: 16px;
+}
+
+.assessment-list {
+    margin-bottom: 20px;
+}
+
+.assessment-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: var(--gray-50);
+    border-radius: var(--border-radius);
+    margin-bottom: 10px;
+    transition: var(--transition);
+}
+
+.assessment-item:hover {
+    background: var(--gray-100);
+}
+
+.assessment-info {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.assessment-date {
+    font-size: 0.9rem;
+    color: var(--gray-600);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.assessment-risk {
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.risk-low { color: var(--success-color); }
+.risk-medium { color: var(--warning-color); }
+.risk-high { color: var(--error-color); }
+
+.assessment-link {
+    color: var(--primary-color);
+    text-decoration: none;
+    padding: 8px;
+    border-radius: 50%;
+    transition: var(--transition);
+}
+
+.assessment-link:hover {
+    background: rgba(102, 126, 234, 0.1);
+    transform: scale(1.1);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.empty-icon {
+    font-size: 3rem;
+    color: var(--gray-400);
+    margin-bottom: 20px;
+}
+
+.empty-state h4 {
+    color: var(--gray-700);
+    margin-bottom: 10px;
+}
+
+.empty-state p {
+    color: var(--gray-600);
+    margin-bottom: 20px;
+}
+
+.insights-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.insight-item {
+    display: flex;
+    gap: 15px;
+    padding: 15px;
+    background: var(--gray-50);
+    border-radius: var(--border-radius);
+    transition: var(--transition);
+}
+
+.insight-item:hover {
+    background: var(--gray-100);
+}
+
+.insight-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    flex-shrink: 0;
+}
+
+.insight-content h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--gray-900);
+    margin-bottom: 5px;
+}
+
+.insight-content p {
+    color: var(--gray-600);
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.risk-overview {
+    padding: 20px 0;
+}
+
+.risk-stats {
+    display: flex;
+    justify-content: space-around;
+    gap: 20px;
+}
+
+.risk-stat {
+    text-align: center;
+}
+
+.risk-number {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.risk-number.low { color: var(--success-color); }
+.risk-number.medium { color: var(--warning-color); }
+.risk-number.high { color: var(--error-color); }
+
+.risk-label {
+    font-size: 0.9rem;
+    color: var(--gray-600);
+    font-weight: 500;
+}
+
+.card-description {
+    color: var(--gray-600);
+    margin-bottom: 20px;
+    line-height: 1.6;
+}
+
+@media (max-width: 1024px) {
+    .welcome-section {
+        grid-template-columns: 1fr;
+        text-align: center;
+        gap: 30px;
+    }
+
+    .welcome-stats {
+        justify-content: center;
+    }
+
+    .action-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard-container {
+        padding: 15px;
+    }
+
+    .welcome-section {
+        padding: 30px 20px;
+    }
+
+    .welcome-content h1 {
+        font-size: 2rem;
+    }
+
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .risk-stats {
+        flex-direction: column;
+        gap: 15px;
+    }
+}
+</style>
+{% endblock %}

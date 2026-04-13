@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Early Disease Risk Prediction - Home</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Early Disease Risk Prediction</h1>
+        <p class="subtitle">Your Health Assessment Companion</p>
+
+        <div id="welcomeSection">
+            <div class="hero">
+                <h2>Welcome to Your Health Assessment</h2>
+                <p>Take control of your health with our simple risk assessment tool. Get started by providing your information and receive a personalized health risk evaluation.</p>
+
+                <div class="features">
+                    <div class="feature">
+                        <h3>📋 Personal Information</h3>
+                        <p>Securely store your basic health information</p>
+                    </div>
+                    <div class="feature">
+                        <h3>🔍 Risk Assessment</h3>
+                        <p>Get a quick health risk evaluation</p>
+                    </div>
+                    <div class="feature">
+                        <h3>📊 Results & Insights</h3>
+                        <p>View your assessment results instantly</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="completedSection" style="display: none;">
+            <div class="welcome-back">
+                <h2>Welcome back, <span id="userNameDisplay"></span>!</h2>
+                <p>You have completed your personal information. You can now access all features:</p>
+
+                <div class="action-buttons">
+                    <a href="Form.html" class="btn-primary">Get Risk Assessment</a>
+                    <a href="PersonalInfo.html" class="btn-secondary">Update Personal Info</a>
+                </div>
+            </div>
+        </div>
+
+        <div id="incompleteSection" style="display: none;">
+            <div class="get-started">
+                <h2>Get Started</h2>
+                <p>To use our risk assessment tool, please complete your personal information first.</p>
+
+                <div class="action-buttons">
+                    <a href="PersonalInfo.html" class="btn-primary">Complete Personal Information</a>
+                </div>
+
+                <p class="note">This information helps us provide accurate assessments and is stored securely in your browser.</p>
+            </div>
+        </div>
+
+        <nav class="footer-nav">
+            <a href="#" id="resetData">Reset All Data</a>
+        </nav>
+    </div>
+
+    <script>
+        // Check user status and show appropriate section
+        window.addEventListener('DOMContentLoaded', function() {
+            const personalInfoCompleted = localStorage.getItem('personalInfoCompleted');
+            const userName = localStorage.getItem('userName');
+
+            if (personalInfoCompleted && userName) {
+                // User has completed personal info
+                document.getElementById('welcomeSection').style.display = 'none';
+                document.getElementById('incompleteSection').style.display = 'none';
+                document.getElementById('completedSection').style.display = 'block';
+
+                document.getElementById('userNameDisplay').textContent = userName;
+            } else {
+                // User needs to complete personal info
+                document.getElementById('welcomeSection').style.display = 'none';
+                document.getElementById('completedSection').style.display = 'none';
+                document.getElementById('incompleteSection').style.display = 'block';
+            }
+        });
+
+        // Reset data functionality
+        document.getElementById('resetData').addEventListener('click', function(e) {
+            e.preventDefault();
+            if (confirm('Are you sure you want to reset all data? This will require you to fill out personal information again.')) {
+                localStorage.clear();
+                alert('Data has been reset. Please refresh the page.');
+                window.location.reload();
+            }
+        });
+    </script>
+</body>
+</html>

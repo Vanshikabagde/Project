@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Early Disease Risk Prediction</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Early Disease Risk Prediction</h1>
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="PersonalInfo.html">Personal Info</a>
+            <a href="#" id="resetData">Reset Data</a>
+        </nav>
+        <form id="miniForm">
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: 0%;"></div>
+            </div>
+            <p style="text-align: center; font-size: 14px; color: #666; margin-bottom: 20px;">Form Completion Progress</p>
+            <fieldset>
+                <legend>Basic Information</legend>
+                <label for="name">Name:</label>
+                <input type="text" id="name" name="name" required>
+                <div class="error" id="nameError">Please enter your name</div>
+                
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+                <div class="error" id="emailError">Please enter a valid email</div>
+                
+                <label for="age">Age:</label>
+                <input type="number" id="age" name="age" min="1" max="120" required>
+                <div class="error" id="ageError">Please enter a valid age</div>
+                
+                <label for="symptoms">Symptoms (optional):</label>
+                <textarea id="symptoms" name="symptoms" rows="3" placeholder="Describe any symptoms..."></textarea>
+                
+                <label for="height">Height (cm):</label>
+                <input type="number" id="height" name="height" min="50" max="250" placeholder="e.g., 170">
+                <div id="bmiDisplay" class="bmi-display" style="display: none;"></div>
+                
+                <label for="weight">Weight (kg):</label>
+                <input type="number" id="weight" name="weight" min="20" max="300" step="0.1" placeholder="e.g., 70.5">
+                
+                <label for="bloodType">Blood Type:</label>
+                <select id="bloodType" name="bloodType">
+                    <option value="">Select (optional)</option>
+                    <option value="A+">A+</option>
+                    <option value="A-">A-</option>
+                    <option value="B+">B+</option>
+                    <option value="B-">B-</option>
+                    <option value="AB+">AB+</option>
+                    <option value="AB-">AB-</option>
+                    <option value="O+">O+</option>
+                    <option value="O-">O-</option>
+                </select>
+                
+                <label for="smokingStatus">Smoking Status:</label>
+                <select id="smokingStatus" name="smokingStatus">
+                    <option value="">Select</option>
+                    <option value="never">Never smoked</option>
+                    <option value="former">Former smoker</option>
+                    <option value="current">Current smoker</option>
+                </select>
+                
+                <label for="exerciseFrequency">Exercise Frequency:</label>
+                <select id="exerciseFrequency" name="exerciseFrequency">
+                    <option value="">Select</option>
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Several times a week</option>
+                    <option value="monthly">Once a month</option>
+                    <option value="rarely">Rarely</option>
+                    <option value="never">Never</option>
+                </select>
+                
+                <label for="familyHistory">Family History of Diseases:</label>
+                <textarea id="familyHistory" name="familyHistory" rows="2" placeholder="e.g., Diabetes, Heart disease, Cancer..."></textarea>
+                
+                <label for="medicalConditions">Current Medical Conditions:</label>
+                <textarea id="medicalConditions" name="medicalConditions" rows="2" placeholder="e.g., Hypertension, Diabetes, Asthma..."></textarea>
+                
+                <label for="medications">Current Medications:</label>
+                <textarea id="medications" name="medications" rows="2" placeholder="List any medications you're taking..."></textarea>
+                
+                <button type="submit">Get Risk Assessment</button>
+            </fieldset>
+        </form>
+        
+        <div id="result" style="display:none;">
+            <h2>Risk Assessment Result</h2>
+            <p id="riskLevel"></p>
+            
+            <div id="healthTips" class="health-tips" style="display: none;">
+                <h3>💡 Health Recommendations</h3>
+                <ul id="tipsList"></ul>
+            </div>
+            
+            <button class="print-btn" onclick="window.print()">🖨️ Print Results</button>
+        </div>
+    </div>
+
+    <script>
+        // Check if personal information has been completed
+        window.addEventListener('DOMContentLoaded', function() {
+            if (!localStorage.getItem('personalInfoCompleted')) {
+                alert('Please complete your personal information first before accessing the prediction form.');
+                window.location.href = 'PersonalInfo.html';
+                return;
+            }
+            
+            // Display user name if available
+            const userName = localStorage.getItem('userName');
+            if (userName) {
+                const welcomeMsg = document.createElement('p');
+                welcomeMsg.textContent = `Welcome, ${userName}!`;
+                welcomeMsg.style.textAlign = 'center';
+                welcomeMsg.style.marginBottom = '20px';
+                welcomeMsg.style.fontWeight = 'bold';
+                welcomeMsg.style.color = '#667eea';
+                document.querySelector('h1').after(welcomeMsg);
+            }
+        });
+        
+        // Real-time BMI calculation
+        function calculateBMI() {
+            const height = parseFloat(document.getElementById('height').value);
+            const weight = parseFloat(document.getElementById('weight').value);
+            const bmiDisplay = document.getElementById('bmiDisplay');
+            
+            if (height && weight && height > 0) {
+                const bmi = weight / ((height / 100) ** 2);
+                let category = '';
+                let color = '';
+                
+                if (bmi < 18.5) {
+                    category = 'Underweight';
+                    color = '#ffc107';
+                } else if (bmi < 25) {
+                    category = 'Normal weight';
+                    color = '#28a745';
+                } else if (bmi < 30) {
+                    category = 'Overweight';
+                    color = '#fd7e14';
+                } else {
+                    category = 'Obese';
+                    color = '#dc3545';
+                }
+                
+                bmiDisplay.innerHTML = `BMI: ${bmi.toFixed(1)} (${category})`;
+                bmiDisplay.style.color = color;
+                bmiDisplay.style.display = 'block';
+            } else {
+                bmiDisplay.style.display = 'none';
+            }
+        }
+        
+        // Add event listeners for real-time BMI calculation
+        document.getElementById('height').addEventListener('input', calculateBMI);
+        document.getElementById('weight').addEventListener('input', calculateBMI);
+        
+        // Form progress tracking
+        function updateProgress() {
+            const requiredFields = ['name', 'email', 'age'];
+            const optionalFields = ['height', 'weight', 'bloodType', 'smokingStatus', 'exerciseFrequency', 'symptoms'];
+            let filledRequired = 0;
+            let filledOptional = 0;
+            
+            requiredFields.forEach(field => {
+                if (document.getElementById(field).value.trim()) filledRequired++;
+            });
+            
+            optionalFields.forEach(field => {
+                if (document.getElementById(field).value.trim()) filledOptional++;
+            });
+            
+            const totalFields = requiredFields.length + optionalFields.length;
+            const filledFields = filledRequired + filledOptional;
+            const progressPercent = (filledFields / totalFields) * 100;
+            
+            // Update progress bar if it exists
+            const progressBar = document.querySelector('.progress-fill');
+            if (progressBar) {
+                progressBar.style.width = progressPercent + '%';
+            }
+        }
+        
+        // Form auto-save functionality
+        function autoSave() {
+            const formData = {};
+            document.querySelectorAll('input, select, textarea').forEach(element => {
+                if (element.id) {
+                    formData[element.id] = element.value;
+                }
+            });
+            localStorage.setItem('assessmentFormData', JSON.stringify(formData));
+        }
+        
+        // Load saved form data
+        function loadSavedData() {
+            const savedData = localStorage.getItem('assessmentFormData');
+            if (savedData) {
+                const formData = JSON.parse(savedData);
+                Object.keys(formData).forEach(key => {
+                    const element = document.getElementById(key);
+                    if (element) {
+                        element.value = formData[key];
+                    }
+                });
+                calculateBMI(); // Recalculate BMI if data was loaded
+                updateProgress(); // Update progress bar
+            }
+        }
+        
+        // Add auto-save to all form inputs
+        document.querySelectorAll('input, select, textarea').forEach(element => {
+            element.addEventListener('input', autoSave);
+            element.addEventListener('change', autoSave);
+        });
+        
+        // Load saved data on page load
+        loadSavedData();
+        
+        document.getElementById('miniForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Show loading state
+            const submitBtn = document.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = '🔄 Analyzing...';
+            submitBtn.disabled = true;
+            
+            // Simulate processing time for better UX
+            setTimeout(() => {
+                // Reset button
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+                
+                // Reset errors
+                document.querySelectorAll('.error').forEach(error => error.style.display = 'none');
+                
+                let isValid = true;
+            
+            // Validate name
+            const name = document.getElementById('name').value.trim();
+            if (!name) {
+                document.getElementById('nameError').style.display = 'block';
+                isValid = false;
+            }
+            
+            // Validate email
+            const email = document.getElementById('email').value.trim();
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!email || !emailRegex.test(email)) {
+                document.getElementById('emailError').style.display = 'block';
+                isValid = false;
+            }
+            
+            // Validate age
+            const age = document.getElementById('age').value;
+            if (!age || age < 1 || age > 120) {
+                document.getElementById('ageError').style.display = 'block';
+                isValid = false;
+            }
+            
+            if (isValid) {
+                const result = document.getElementById('result');
+                result.style.display = 'block';
+                
+                // Enhanced risk prediction based on multiple health factors
+                let risk = 'Low';
+                let riskFactors = [];
+                
+                // Age factor
+                if (age > 60) {
+                    risk = 'High';
+                    riskFactors.push('Age over 60');
+                } else if (age > 40) {
+                    risk = 'Medium';
+                    riskFactors.push('Age 40-60');
+                }
+                
+                // Get form data for health assessment
+                const height = parseFloat(document.getElementById('height').value);
+                const weight = parseFloat(document.getElementById('weight').value);
+                const smokingStatus = document.getElementById('smokingStatus').value;
+                const exerciseFrequency = document.getElementById('exerciseFrequency').value;
+                const familyHistory = document.getElementById('familyHistory').value.trim();
+                const medicalConditions = document.getElementById('medicalConditions').value.trim();
+                const medications = document.getElementById('medications').value.trim();
+                
+                // BMI calculation (if height and weight provided)
+                if (height && weight && height > 0) {
+                    const bmi = weight / ((height / 100) ** 2);
+                    if (bmi >= 30) {
+                        risk = 'High';
+                        riskFactors.push(`BMI: ${bmi.toFixed(1)} (Obese)`);
+                    } else if (bmi >= 25) {
+                        risk = risk === 'Low' ? 'Medium' : 'High';
+                        riskFactors.push(`BMI: ${bmi.toFixed(1)} (Overweight)`);
+                    } else if (bmi < 18.5) {
+                        risk = risk === 'Low' ? 'Medium' : 'High';
+                        riskFactors.push(`BMI: ${bmi.toFixed(1)} (Underweight)`);
+                    }
+                }
+                
+                // Smoking factor
+                if (smokingStatus === 'current') {
+                    risk = risk === 'Low' ? 'Medium' : 'High';
+                    riskFactors.push('Current smoker');
+                } else if (smokingStatus === 'former') {
+                    risk = risk === 'Low' ? 'Medium' : 'High';
+                    riskFactors.push('Former smoker');
+                }
+                
+                // Exercise factor
+                if (exerciseFrequency === 'rarely' || exerciseFrequency === 'never') {
+                    risk = risk === 'Low' ? 'Medium' : 'High';
+                    riskFactors.push('Low exercise frequency');
+                } else if (exerciseFrequency === 'daily') {
+                    // Reduce risk for daily exercise
+                    if (risk === 'Medium') risk = 'Low';
+                }
+                
+                // Family history factor
+                if (familyHistory) {
+                    risk = risk === 'Low' ? 'Medium' : 'High';
+                    riskFactors.push('Family history of diseases');
+                }
+                
+                // Medical conditions factor
+                if (medicalConditions) {
+                    risk = 'High';
+                    riskFactors.push('Existing medical conditions');
+                }
+                
+                // Medications factor
+                if (medications) {
+                    risk = risk === 'Low' ? 'Medium' : 'High';
+                    riskFactors.push('Currently taking medications');
+                }
+                
+                // Generate result message
+                let resultMessage = `Based on your information, your risk level is: <strong>${risk}</strong>`;
+                if (riskFactors.length > 0) {
+                    resultMessage += `<br><br><strong>Risk Factors Identified:</strong><br>${riskFactors.join('<br>')}`;
+                } else {
+                    resultMessage += `<br><br><strong>No significant risk factors identified.</strong>`;
+                }
+                
+                resultMessage += `<br><br><small>This is a demo prediction based on general health indicators. Please consult a healthcare professional for real medical advice.</small>`;
+                
+                document.getElementById('riskLevel').innerHTML = resultMessage;
+                
+                // Generate health tips based on risk factors
+                generateHealthTips(risk, riskFactors);
+                
+                // Add animation classes
+                result.classList.add('result-appear');
+                healthTips.classList.add('fade-in');
+                
+                // Scroll to result
+                result.scrollIntoView({ behavior: 'smooth' });
+            }
+        });
+        
+        // Generate personalized health tips
+        function generateHealthTips(riskLevel, riskFactors) {
+            const tipsList = document.getElementById('tipsList');
+            const healthTips = document.getElementById('healthTips');
+            
+            let tips = [];
+            
+            // General tips
+            tips.push("Schedule regular check-ups with your healthcare provider");
+            tips.push("Maintain a balanced diet rich in fruits and vegetables");
+            
+            // Risk-specific tips
+            if (riskLevel === 'High') {
+                tips.push("⚠️ Consider consulting a specialist for comprehensive health screening");
+                tips.push("Monitor your health indicators closely and keep records");
+            }
+            
+            // Factor-specific tips
+            if (riskFactors.some(factor => factor.includes('BMI'))) {
+                tips.push("Focus on achieving and maintaining a healthy weight through diet and exercise");
+                tips.push("Consider consulting a nutritionist for personalized dietary advice");
+            }
+            
+            if (riskFactors.some(factor => factor.includes('smoker'))) {
+                tips.push("Consider smoking cessation programs - your doctor can help");
+                tips.push("Avoid secondhand smoke and smoky environments");
+            }
+            
+            if (riskFactors.some(factor => factor.includes('exercise'))) {
+                tips.push("Aim for at least 150 minutes of moderate exercise per week");
+                tips.push("Find activities you enjoy - walking, swimming, or cycling");
+            }
+            
+            if (riskFactors.some(factor => factor.includes('Age'))) {
+                tips.push("Age-related screenings become more important - discuss with your doctor");
+                tips.push("Stay socially active and engaged for better mental health");
+            }
+            
+            if (riskFactors.some(factor => factor.includes('medical conditions'))) {
+                tips.push("Follow your treatment plan and medication schedule carefully");
+                tips.push("Keep a health diary to track symptoms and medication effects");
+            }
+            
+            // Display tips
+            tipsList.innerHTML = tips.map(tip => `<li>${tip}</li>`).join('');
+            healthTips.style.display = 'block';
+        }
+        
+        // Reset data functionality
+        document.getElementById('resetData').addEventListener('click', function(e) {
+            e.preventDefault();
+            if (confirm('Are you sure you want to reset all data? This will require you to fill out personal information again.')) {
+                localStorage.clear();
+                alert('Data has been reset. Redirecting to personal information page.');
+                window.location.href = 'PersonalInfo.html';
+            }
+        });
+    </script>
+</body>
+</html>

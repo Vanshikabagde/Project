@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}HealthGuard Preview{% endblock %}</title>
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/enhanced_styles.css') }}">
+{% block extra_head %}{% endblock %}
+</head>
+
+<body>
+
+<!-- Navbar -->
+<div class="navbar">
+    <div class="container">
+        <h2><i class="fas fa-heartbeat"></i> HealthGuard</h2>
+        <div class="nav-links">
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('dashboard') }}">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </a>
+                <a href="{{ url_for('personal_info') }}">
+                    <i class="fas fa-user"></i> Profile
+                </a>
+                {% if personal_info %}
+                <a href="{{ url_for('assessment') }}">
+                    <i class="fas fa-clipboard-check"></i> Assessment
+                </a>
+                {% endif %}
+                <a href="{{ url_for('history') }}">
+                    <i class="fas fa-history"></i> History
+                </a>
+                <a href="{{ url_for('statistics') }}">
+                    <i class="fas fa-chart-bar"></i> Analytics
+                </a>
+                <a href="{{ url_for('logout') }}" class="logout">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            {% else %}
+                <a href="{{ url_for('login') }}">Login</a>
+                <a href="{{ url_for('register') }}">Register</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<main class="main-content">
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for message in messages %}
+                    <div class="flash-message {{ 'success' if 'success' in message.lower() else 'error' }}">
+                        <i class="fas {{ 'fa-check-circle' if 'success' in message.lower() else 'fa-exclamation-triangle' }}"></i>
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+</main>
+
+<footer class="footer">
+    <div class="footer-content">
+        <div class="footer-section">
+            <h4><i class="fas fa-shield-alt"></i> HealthGuard</h4>
+            <p>Advanced health risk assessment powered by machine learning</p>
+        </div>
+        <div class="footer-section">
+            <h4>Quick Links</h4>
+            <a href="{{ url_for('assessment') }}">New Assessment</a>
+            <a href="{{ url_for('history') }}">View History</a>
+            <a href="{{ url_for('statistics') }}">Statistics</a>
+        </div>
+        <div class="footer-section">
+            <h4>Disclaimer</h4>
+            <p>This tool provides risk assessment estimates. Always consult healthcare professionals for medical advice.</p>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <p>&copy; 2026 HealthGuard. Built with <i class="fas fa-heart text-red"></i> for better health outcomes.</p>
+    </div>
+</footer>
+
+<script>
+    // Mobile menu toggle
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-hide flash messages
+        const flashMessages = document.querySelectorAll('.flash-message');
+        flashMessages.forEach(message => {
+            setTimeout(() => {
+                message.style.opacity = '0';
+                setTimeout(() => message.remove(), 300);
+            }, 5000);
+        });
+    });
+</script>
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Information</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Personal Information</h1>
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="PersonalInfo.html">Personal Info</a>
+            <a href="#" id="resetData">Reset Data</a>
+        </nav>
+        <form id="personalInfoForm">
+            <fieldset>
+                <legend>Enter Your Details</legend>
+                <label for="firstName">First Name:</label>
+                <input type="text" id="firstName" name="firstName" required>
+                <div class="error" id="firstNameError">Please enter your first name</div>
+                
+                <label for="lastName">Last Name:</label>
+                <input type="text" id="lastName" name="lastName" required>
+                <div class="error" id="lastNameError">Please enter your last name</div>
+                
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+                <div class="error" id="emailError">Please enter a valid email</div>
+                
+                <label for="phone">Phone Number:</label>
+                <input type="tel" id="phone" name="phone" required>
+                <div class="error" id="phoneError">Please enter a valid phone number</div>
+                
+                <label for="address">Address:</label>
+                <textarea id="address" name="address" rows="3" required></textarea>
+                <div class="error" id="addressError">Please enter your address</div>
+                
+                <label for="dateOfBirth">Date of Birth:</label>
+                <input type="date" id="dateOfBirth" name="dateOfBirth" required>
+                <div class="error" id="dobError">Please select your date of birth</div>
+                
+                <label for="gender">Gender:</label>
+                <select id="gender" name="gender" required>
+                    <option value="">Select</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                </select>
+                <div class="error" id="genderError">Please select your gender</div>
+                
+                <label for="emergencyContact">Emergency Contact Name:</label>
+                <input type="text" id="emergencyContact" name="emergencyContact">
+                
+                <label for="emergencyPhone">Emergency Contact Phone:</label>
+                <input type="tel" id="emergencyPhone" name="emergencyPhone">
+                
+                <button type="submit">Save Information</button>
+            </fieldset>
+        </form>
+        
+        <div id="confirmation" style="display:none;">
+            <h2>Information Saved</h2>
+            <p>Your personal information has been saved successfully.</p>
+        </div>
+        
+        <p style="margin-top: 20px; text-align: center;"><a href="Form.html">Go to Disease Risk Prediction</a></p>
+    </div>
+
+    <script>
+        document.getElementById('personalInfoForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Reset errors
+            document.querySelectorAll('.error').forEach(error => error.style.display = 'none');
+            
+            let isValid = true;
+            
+            // Validate first name
+            const firstName = document.getElementById('firstName').value.trim();
+            if (!firstName) {
+                document.getElementById('firstNameError').style.display = 'block';
+                isValid = false;
+            }
+            
+            // Validate last name
+            const lastName = document.getElementById('lastName').value.trim();
+            if (!lastName) {
+                document.getElementById('lastNameError').style.display = 'block';
+                isValid = false;
+            }
+            
+            // Validate email
+            const email = document.getElementById('email').value.trim();
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!email || !emailRegex.test(email)) {
+                document.getElementById('emailError').style.display = 'block';
+                isValid = false;
+            }
+            
+            // Validate phone
+            const phone = document.getElementById('phone').value.trim();
+            const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+            if (!phone || !phoneRegex.test(phone.replace(/[\s\-\(\)]/g, ''))) {
+                document.getElementById('phoneError').style.display = 'block';
+                isValid = false;
+            }
+            
+            // Validate address
+            const address = document.getElementById('address').value.trim();
+            if (!address) {
+                document.getElementById('addressError').style.display = 'block';
+                isValid = false;
+            }
+            
+            // Validate date of birth
+            const dob = document.getElementById('dateOfBirth').value;
+            if (!dob) {
+                document.getElementById('dobError').style.display = 'block';
+                isValid = false;
+            }
+            
+            // Validate gender
+            const gender = document.getElementById('gender').value;
+            if (!gender) {
+                document.getElementById('genderError').style.display = 'block';
+                isValid = false;
+            }
+            
+            if (isValid) {
+                const confirmation = document.getElementById('confirmation');
+                confirmation.style.display = 'block';
+                
+                // Store completion status in localStorage
+                localStorage.setItem('personalInfoCompleted', 'true');
+                localStorage.setItem('userName', firstName + ' ' + lastName);
+                
+                // Store basic personal data
+                const basicData = {
+                    email: document.getElementById('email').value,
+                    phone: document.getElementById('phone').value,
+                    address: document.getElementById('address').value,
+                    dateOfBirth: document.getElementById('dateOfBirth').value,
+                    gender: document.getElementById('gender').value,
+                    emergencyContact: document.getElementById('emergencyContact').value,
+                    emergencyPhone: document.getElementById('emergencyPhone').value
+                };
+                
+                localStorage.setItem('basicData', JSON.stringify(basicData));
+                                // In a real application, you would send this data to a server
+                console.log('Personal information saved');
+                
+                // Scroll to confirmation
+                confirmation.scrollIntoView({ behavior: 'smooth' });
+            }
+        });
+        
+        // Reset data functionality
+        document.getElementById('resetData').addEventListener('click', function(e) {
+            e.preventDefault();
+            if (confirm('Are you sure you want to reset all data?')) {
+                localStorage.clear();
+                alert('Data has been reset.');
+                // Reload the page to clear any stored state
+                window.location.reload();
+            }
+        });
+    </script>
+</body>
+</html>

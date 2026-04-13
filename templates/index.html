@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}HealthGuard Preview{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<div class="hero">
+    <h1>🏥 Early Disease Risk Prediction</h1>
+    <p>Your AI-powered health companion</p>
+</div>
+
+<!-- Card -->
+<div class="card">
+    <h2>Get Started</h2>
+    <p>Create an account and start your health assessment journey.</p>
+
+    <div class="features">
+        <div class="feature">
+            🧠<br><b>AI Analysis</b><br>
+            Smart predictions
+        </div>
+        <div class="feature">
+            📊<br><b>Insights</b><br>
+            Clear health metrics
+        </div>
+        <div class="feature">
+            🔒<br><b>Secure</b><br>
+            Your data is safe
+        </div>
+    </div>
+
+    {% if current_user.is_authenticated %}
+        <a href="{{ url_for('assessment') }}" class="btn btn-primary">Start New Assessment</a>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">View Dashboard</a>
+    {% else %}
+        <a href="{{ url_for('register') }}" class="btn btn-primary">Create Account</a>
+        <a href="{{ url_for('login') }}" class="btn btn-secondary">Login</a>
+    {% endif %}
+</div>
+
+<!-- Stats -->
+<div class="stats">
+    <h2>📈 Impact</h2>
+    <div class="stats-grid">
+        <div class="stat">
+            <div class="stat-number">95%</div>
+            <div class="stat-label">Accuracy</div>
+        </div>
+        <div class="stat">
+            <div class="stat-number">&lt;30s</div>
+            <div class="stat-label">Time</div>
+        </div>
+        <div class="stat">
+            <div class="stat-number">100%</div>
+            <div class="stat-label">Secure</div>
+        </div>
+    </div>
+</div>
+{% endblock %}

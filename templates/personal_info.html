@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}Personal Information - Health Assessment{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <div class="form-header">
+        <h1>📋 Personal Information</h1>
+        <p>Please provide your personal details. This information is required before taking health assessments.</p>
+    </div>
+
+    <form method="POST" class="health-form" id="personalForm">
+
+        <div class="form-section">
+            <h3>👤 Basic Information</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="first_name">First Name *</label>
+                    <input type="text" id="first_name" name="first_name" required
+                           value="{{ personal_info.first_name if personal_info else '' }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="last_name">Last Name *</label>
+                    <input type="text" id="last_name" name="last_name" required
+                           value="{{ personal_info.last_name if personal_info else '' }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="date_of_birth">Date of Birth *</label>
+                    <input type="date" id="date_of_birth" name="date_of_birth" required
+                           value="{{ personal_info.date_of_birth.strftime('%Y-%m-%d') if personal_info and personal_info.date_of_birth else '' }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="gender">Gender *</label>
+                    <select id="gender" name="gender" required>
+                        <option value="">Select Gender</option>
+                        <option value="Male" {{ 'selected' if personal_info and personal_info.gender == 'Male' else '' }}>Male</option>
+                        <option value="Female" {{ 'selected' if personal_info and personal_info.gender == 'Female' else '' }}>Female</option>
+                        <option value="Other" {{ 'selected' if personal_info and personal_info.gender == 'Other' else '' }}>Other</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3>📞 Contact Information</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="phone">Phone Number</label>
+                    <input type="tel" id="phone" name="phone"
+                           value="{{ personal_info.phone if personal_info else '' }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="address">Address</label>
+                    <textarea id="address" name="address" rows="3">{{ personal_info.address if personal_info else '' }}</textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3>🚨 Emergency Contact</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="emergency_contact">Emergency Contact Name</label>
+                    <input type="text" id="emergency_contact" name="emergency_contact"
+                           value="{{ personal_info.emergency_contact if personal_info else '' }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="emergency_phone">Emergency Contact Phone</label>
+                    <input type="tel" id="emergency_phone" name="emergency_phone"
+                           value="{{ personal_info.emergency_phone if personal_info else '' }}">
+                </div>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Save Information</button>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-save functionality
+    let autoSaveTimeout;
+    const form = document.getElementById('personalForm');
+    const inputs = form.querySelectorAll('input, select, textarea');
+
+    inputs.forEach(input => {
+        input.addEventListener('input', function() {
+            clearTimeout(autoSaveTimeout);
+            autoSaveTimeout = setTimeout(() => {
+                // In a real implementation, this would save to localStorage or send to server
+                console.log('Auto-saving...', this.name, this.value);
+            }, 1000);
+        });
+    });
+
+    // Form validation
+    form.addEventListener('submit', function(e) {
+        const requiredFields = form.querySelectorAll('[required]');
+        let isValid = true;
+
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                field.style.borderColor = '#dc3545';
+                isValid = false;
+            } else {
+                field.style.borderColor = '#28a745';
+            }
+        });
+
+        if (!isValid) {
+            e.preventDefault();
+            alert('Please fill in all required fields.');
+        }
+    });
+});
+</script>
+{% endblock %}
